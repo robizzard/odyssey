@@ -38,6 +38,7 @@ public class FileModel implements GenericModel, Comparable<FileModel> {
      * The file object for this instance
      */
     private final File mFile;
+    private final Boolean mIndexedDirectory;
 
     /**
      * Helper class to compare to FileModel instances
@@ -63,6 +64,7 @@ public class FileModel implements GenericModel, Comparable<FileModel> {
      */
     public FileModel(File file) {
         mFile = file;
+        mIndexedDirectory = null;
 
         mFileModelComparator = new FileModelComparator();
         mFileExtensionFilter = new FileExtensionFilter(fileExtensions);
@@ -73,7 +75,16 @@ public class FileModel implements GenericModel, Comparable<FileModel> {
      */
     public FileModel(String filePath) {
         mFile = new File(filePath);
+        mIndexedDirectory = null;
 
+        mFileModelComparator = new FileModelComparator();
+        mFileExtensionFilter = new FileExtensionFilter(fileExtensions);
+    }
+
+    /** Known type from an imported index, avoiding SD card stat calls. */
+    public FileModel(String filePath, boolean isDirectory) {
+        mFile = new File(filePath);
+        mIndexedDirectory = isDirectory;
         mFileModelComparator = new FileModelComparator();
         mFileExtensionFilter = new FileExtensionFilter(fileExtensions);
     }
@@ -120,14 +131,14 @@ public class FileModel implements GenericModel, Comparable<FileModel> {
      * Return if the file object is a directory
      */
     public boolean isDirectory() {
-        return mFile.isDirectory();
+        return mIndexedDirectory != null ? mIndexedDirectory : mFile.isDirectory();
     }
 
     /**
      * Return if the file object is a file
      */
     public boolean isFile() {
-        return mFile.isFile();
+        return mIndexedDirectory != null ? !mIndexedDirectory : mFile.isFile();
     }
 
     /**

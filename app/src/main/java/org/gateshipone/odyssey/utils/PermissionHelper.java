@@ -145,7 +145,14 @@ public class PermissionHelper {
         List<FileModel> files = new ArrayList<>();
 
         if (isAudioFilesAccessAllowed(context)) {
+            long start = android.os.SystemClock.elapsedRealtime();
+            List<FileModel> indexed = DirectoryIndex.list(context, directory.getPath());
+            if (indexed != null) {
+                android.util.Log.d("OdysseyDirectoryIndex", "INDEX " + directory.getPath() + " " + indexed.size() + " entries in " + (android.os.SystemClock.elapsedRealtime() - start) + "ms");
+                return indexed;
+            }
             files = directory.listFilesSorted();
+            android.util.Log.d("OdysseyDirectoryIndex", "FALLBACK " + directory.getPath() + " " + files.size() + " entries in " + (android.os.SystemClock.elapsedRealtime() - start) + "ms");
         }
 
         return files;

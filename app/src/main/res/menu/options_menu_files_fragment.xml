@@ -31,6 +31,16 @@
         app:showAsAction="ifRoom|collapseActionView" />
 
     <item
+        android:id="@+id/action_import_directory_index"
+        android:title="Import directory index for this folder"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_directory_index_status"
+        android:title="@string/directory_index_status_title"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_add_directory"
         android:title="@string/action_add_directory"
         app:showAsAction="never" />

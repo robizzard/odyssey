@@ -76,6 +76,8 @@ android {
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
         debug {
+            applicationIdSuffix ".debug"    
+
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.config
             }

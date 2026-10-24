@@ -21,7 +21,7 @@
   -->
 
 <resources>
-    <string name="app_name" translatable="false">Odyssey</string>
+    <string name="app_name" translatable="false">Odyssex</string>
 
     <!-- permission request -->
     <string name="permission_request_snackbar_button" translatable="false">@android:string/ok</string>
@@ -372,4 +372,8 @@
 
     <string name="preference_smart_random_title">Smart random</string>
     <string name="preference_smart_random_text">Select a random selection preference. This option allows random playback to be more uniformly distributed (for artists). This is useful for playlists with a lot of tracks of one artist and few tracks of other artists.</string>
+    <string name="directory_index_status_title">Directory index status</string>
+    <string name="directory_index_not_imported">No directory index has been imported.</string>
+    <string name="directory_index_unknown_date">Unknown</string>
+    <string name="directory_index_status_details">Root: %1$s\nDirectories: %2$d\nFiles: %3$d\nImported: %4$s</string>
 </resources>

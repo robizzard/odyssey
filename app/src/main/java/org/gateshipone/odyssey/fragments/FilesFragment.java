@@ -24,6 +24,15 @@ package org.gateshipone.odyssey.fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.app.Activity;
+import androidx.appcompat.app.AlertDialog;
+import android.text.format.DateFormat;
+import java.util.Date;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import android.widget.Toast;
+import java.io.InputStream;
+import org.gateshipone.odyssey.utils.DirectoryIndex;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -65,6 +74,27 @@ import org.gateshipone.odyssey.viewmodels.GenericViewModel;
 import java.util.List;
 
 public class FilesFragment extends OdysseyFragment<FileModel> implements AdapterView.OnItemClickListener {
+    private FileModel mCurrentDirectory;
+    private final ActivityResultLauncher<Intent> indexPicker = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null || result.getData().getData() == null) return;
+                final android.net.Uri uri = result.getData().getData();
+                final String root = mCurrentDirectory.getPath();
+                final Context app = requireContext().getApplicationContext();
+                new Thread(() -> {
+                    String error = null;
+                    try (InputStream input = app.getContentResolver().openInputStream(uri)) {
+                        if (input == null) throw new java.io.IOException("Could not open index");
+                        DirectoryIndex.importIndex(app, input, root);
+                    } catch (Exception e) { error = e.getMessage(); }
+                    final String finalError = error;
+                    requireActivity().runOnUiThread(() -> {
+                        if (!isAdded()) return;
+                        Toast.makeText(requireContext(), finalError == null ? "Directory index imported" : "Index import failed: " + finalError, Toast.LENGTH_LONG).show();
+                        if (finalError == null) refreshContent();
+                    });
+                }).start();
+            });
 
     /**
      * Listener to open a child directory
@@ -76,7 +106,7 @@ public class FilesFragment extends OdysseyFragment<FileModel> implements Adapter
     /**
      * the current directory that is displayed by the fragment
      */
-    private FileModel mCurrentDirectory;
+    //private FileModel mCurrentDirectory;
     /**
      * flag if the current directory is a root directory
      */
@@ -386,7 +416,32 @@ public class FilesFragment extends OdysseyFragment<FileModel> implements Adapter
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         final int itemId = item.getItemId();
 
-        if (itemId == R.id.action_add_directory) {
+        if (itemId == R.id.action_import_directory_index) {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*");
+            indexPicker.launch(intent);
+            return true;
+        } else if (itemId == R.id.action_directory_index_status) {
+            DirectoryIndex.Status status = DirectoryIndex.getStatus(requireContext().getApplicationContext());
+            String message;
+            if (status == null) {
+                message = getString(R.string.directory_index_not_imported);
+            } else {
+                String date = status.importedAt > 0
+                        ? DateFormat.getMediumDateFormat(requireContext()).format(new Date(status.importedAt))
+                          + " " + DateFormat.getTimeFormat(requireContext()).format(new Date(status.importedAt))
+                        : getString(R.string.directory_index_unknown_date);
+                message = getString(R.string.directory_index_status_details,
+                        status.root, status.directories, status.files, date);
+            }
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.directory_index_status_title)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return true;
+        } else if (itemId == R.id.action_add_directory) {
             enqueueCurrentFolderAndSubFolders();
             return true;
         } else if (itemId == R.id.action_switch_storage_volume) {
@@ -463,7 +518,11 @@ public class FilesFragment extends OdysseyFragment<FileModel> implements Adapter
     private void playFolder(int position) {
         try {
             // compute position
-            int index = position - mCurrentDirectory.getNumberOfSubFolders();
+            int folders = 0;
+            for (int i = 0; i < position; i++) {
+                if (mAdapter.getItem(i).isDirectory()) folders++;
+            }
+            int index = position - folders;
             ((GenericActivity) requireActivity()).getPlaybackService().playDirectory(mCurrentDirectory.getPath(), index);
         } catch (RemoteException e) {
             // TODO Auto-generated catch block
